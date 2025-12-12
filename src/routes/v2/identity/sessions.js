@@ -1,3 +1,10 @@
+/**
+ * @swagger
+ * tags:
+ *   - name: Identity
+ *     description: Authentication and identity management endpoints
+ */
+
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
@@ -9,6 +16,59 @@ const { verifyCaptcha } = require('../../../services/captchaService');
 const logger = require('../../../utils/logger');
 const crypto = require('crypto');
 
+/**
+ * @swagger
+ * /api/v2/nebryx/identity/sessions:
+ *   post:
+ *     summary: Create session (login)
+ *     tags: [Identity]
+ *     description: Authenticate user and create a session. Returns user data and CSRF token.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: SecurePassword123!
+ *               otp_code:
+ *                 type: string
+ *                 description: OTP code if 2FA is enabled
+ *                 example: "123456"
+ *               captcha_response:
+ *                 type: string
+ *                 description: Captcha response if captcha is enabled
+ *     responses:
+ *       200:
+ *         description: Session created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/Session'
+ *       401:
+ *         description: Authentication failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       422:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post(
   '/',
   [
@@ -203,6 +263,33 @@ router.post(
   }
 );
 
+/**
+ * @swagger
+ * /api/v2/nebryx/identity/sessions:
+ *   delete:
+ *     summary: Destroy session (logout)
+ *     tags: [Identity]
+ *     description: Destroy the current user session
+ *     security:
+ *       - SessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Session destroyed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Session destroyed
+ *       404:
+ *         description: Session not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.delete('/', async (req, res, next) => {
   try {
     if (!req.session.uid) {

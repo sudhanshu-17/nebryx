@@ -1,3 +1,10 @@
+/**
+ * @swagger
+ * tags:
+ *   - name: Resource
+ *     description: User resource management endpoints (requires authentication)
+ */
+
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
@@ -6,6 +13,28 @@ const crypto = require('crypto');
 const { encrypt } = require('../../../services/encryptionService');
 const logger = require('../../../utils/logger');
 
+/**
+ * @swagger
+ * /api/v2/nebryx/resource/api_keys/me:
+ *   get:
+ *     summary: List API keys
+ *     tags: [Resource]
+ *     description: Get all API keys for current user
+ *     security:
+ *       - SessionAuth: []
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of API keys
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/APIKey'
+ *       401:
+ *         description: Unauthorized
+ */
 router.get('/me', async (req, res, next) => {
   try {
     const apiKeys = await APIKey.findAll({
@@ -29,6 +58,55 @@ router.get('/me', async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v2/nebryx/resource/api_keys:
+ *   post:
+ *     summary: Create API key
+ *     tags: [Resource]
+ *     description: Create a new API key for programmatic access
+ *     security:
+ *       - SessionAuth: []
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               algorithm:
+ *                 type: string
+ *                 enum: [HS256, HS384, HS512]
+ *                 default: HS256
+ *               scope:
+ *                 type: string
+ *                 description: API key scope/permissions
+ *     responses:
+ *       201:
+ *         description: API key created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 kid:
+ *                   type: string
+ *                   description: Key identifier
+ *                 secret:
+ *                   type: string
+ *                   description: API key secret (only shown once)
+ *                 algorithm:
+ *                   type: string
+ *                 scope:
+ *                   type: string
+ *                 state:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized
+ *       422:
+ *         description: Validation error
+ */
 router.post(
   '/',
   [
@@ -70,6 +148,43 @@ router.post(
   }
 );
 
+/**
+ * @swagger
+ * /api/v2/nebryx/resource/api_keys/{kid}:
+ *   delete:
+ *     summary: Delete API key
+ *     tags: [Resource]
+ *     description: Delete (deactivate) an API key
+ *     security:
+ *       - SessionAuth: []
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: kid
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Key identifier
+ *     responses:
+ *       200:
+ *         description: API key deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: API key deleted
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: API key not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.delete('/:kid', async (req, res, next) => {
   try {
     const apiKey = await APIKey.findOne({

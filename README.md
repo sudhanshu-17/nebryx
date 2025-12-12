@@ -104,6 +104,20 @@ Key environment variables to configure:
 
 See `.env.example` for all available configuration options.
 
+## API Documentation
+
+Nebryx provides comprehensive Swagger/OpenAPI documentation for all API endpoints.
+
+**Access the Swagger UI:**
+- **Swagger UI**: `http://localhost:3000/api/v2/swagger`
+- **JSON Specification**: `http://localhost:3000/api/v2/swagger.json`
+
+The documentation includes:
+- **Identity endpoints**: Authentication, registration, password reset, email confirmation
+- **Resource endpoints**: User profiles, API keys, documents, phones (requires authentication)
+- **Admin endpoints**: User management, permissions, activities (requires admin authentication)
+- **Public endpoints**: Health checks, configuration
+
 ## API Endpoints
 
 ### Identity Endpoints (`/api/v2/nebryx/identity`)

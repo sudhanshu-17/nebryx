@@ -1,3 +1,10 @@
+/**
+ * @swagger
+ * tags:
+ *   - name: Identity
+ *     description: Authentication and identity management endpoints
+ */
+
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
@@ -22,6 +29,57 @@ const redisClient = redis.createClient({
 
 redisClient.connect().catch(console.error);
 
+/**
+ * @swagger
+ * /api/v2/nebryx/identity/users:
+ *   post:
+ *     summary: Create user (registration)
+ *     tags: [Identity]
+ *     description: Register a new user account
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: SecurePassword123!
+ *               username:
+ *                 type: string
+ *                 minLength: 4
+ *                 maxLength: 12
+ *                 pattern: '^[a-zA-Z0-9]+$'
+ *                 example: "johndoe"
+ *               refid:
+ *                 type: string
+ *                 description: Referral user ID
+ *               captcha_response:
+ *                 type: string
+ *                 description: Captcha response if captcha is enabled
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       422:
+ *         description: Validation error or user already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post(
   '/',
   [
@@ -190,6 +248,47 @@ router.get('/register_geetest', async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v2/nebryx/identity/users/email/generate_code:
+ *   post:
+ *     summary: Request email confirmation code
+ *     tags: [Identity]
+ *     description: Generate and send email confirmation code
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               captcha_response:
+ *                 type: string
+ *                 description: Captcha response if captcha is enabled
+ *     responses:
+ *       201:
+ *         description: Email confirmation code generated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Email confirmation code generated
+ *       422:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post(
   '/email/generate_code',
   [
@@ -250,6 +349,41 @@ router.post(
   }
 );
 
+/**
+ * @swagger
+ * /api/v2/nebryx/identity/users/email/confirm_code:
+ *   post:
+ *     summary: Confirm email address
+ *     tags: [Identity]
+ *     description: Confirm email address using confirmation token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Email confirmation token
+ *                 example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *     responses:
+ *       200:
+ *         description: Email confirmed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/Session'
+ *       422:
+ *         description: Invalid or utilized token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post(
   '/email/confirm_code',
   [
@@ -331,6 +465,47 @@ router.post(
   }
 );
 
+/**
+ * @swagger
+ * /api/v2/nebryx/identity/users/password/generate_code:
+ *   post:
+ *     summary: Request password reset code
+ *     tags: [Identity]
+ *     description: Generate and send password reset code
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               captcha_response:
+ *                 type: string
+ *                 description: Captcha response if captcha is enabled
+ *     responses:
+ *       201:
+ *         description: Password reset code generated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Password reset code generated
+ *       422:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post(
   '/password/generate_code',
   [
@@ -393,6 +568,54 @@ router.post(
   }
 );
 
+/**
+ * @swagger
+ * /api/v2/nebryx/identity/users/password/confirm_code:
+ *   post:
+ *     summary: Reset password
+ *     tags: [Identity]
+ *     description: Reset password using reset token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reset_password_token
+ *               - password
+ *               - confirm_password
+ *             properties:
+ *               reset_password_token:
+ *                 type: string
+ *                 description: Password reset token
+ *                 example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: NewSecurePassword123!
+ *               confirm_password:
+ *                 type: string
+ *                 format: password
+ *                 example: NewSecurePassword123!
+ *     responses:
+ *       201:
+ *         description: Password reset successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Password reset successful
+ *       422:
+ *         description: Validation error or invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post(
   '/password/confirm_code',
   [

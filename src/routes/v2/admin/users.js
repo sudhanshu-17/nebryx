@@ -1,3 +1,10 @@
+/**
+ * @swagger
+ * tags:
+ *   - name: Admin
+ *     description: Administrative endpoints (requires admin authentication)
+ */
+
 const express = require('express');
 const router = express.Router();
 const { body, validationResult, query } = require('express-validator');
@@ -13,6 +20,87 @@ const paginate = (page = 1, limit = 25) => {
   return { limit: parseInt(limit), offset: parseInt(offset) };
 };
 
+/**
+ * @swagger
+ * /api/v2/nebryx/admin/users:
+ *   get:
+ *     summary: List users (Admin)
+ *     tags: [Admin]
+ *     description: Get list of users with filtering and pagination (admin only)
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 25
+ *         description: Number of records per page
+ *       - in: query
+ *         name: uid
+ *         schema:
+ *           type: string
+ *         description: Filter by user UID
+ *       - in: query
+ *         name: email
+ *         schema:
+ *           type: string
+ *         description: Filter by email
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *         description: Filter by role
+ *       - in: query
+ *         name: state
+ *         schema:
+ *           type: string
+ *         description: Filter by state
+ *       - in: query
+ *         name: level
+ *         schema:
+ *           type: integer
+ *         description: Filter by level
+ *       - in: query
+ *         name: extended
+ *         schema:
+ *           type: boolean
+ *         description: Include extended user data
+ *     responses:
+ *       200:
+ *         description: List of users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (admin access required)
+ */
 router.get(
   '/',
   [

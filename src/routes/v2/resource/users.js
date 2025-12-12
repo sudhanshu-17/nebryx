@@ -1,3 +1,10 @@
+/**
+ * @swagger
+ * tags:
+ *   - name: Resource
+ *     description: User resource management endpoints (requires authentication)
+ */
+
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
@@ -8,6 +15,30 @@ const { logActivity } = require('../../../services/activityLogger');
 const { validatePassword } = require('../../../services/passwordStrengthChecker');
 const logger = require('../../../utils/logger');
 
+/**
+ * @swagger
+ * /api/v2/nebryx/resource/users/me:
+ *   get:
+ *     summary: Get current user
+ *     tags: [Resource]
+ *     description: Get current authenticated user information
+ *     security:
+ *       - SessionAuth: []
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/me', async (req, res, next) => {
   try {
     const user = await User.findByPk(req.user.id, {
@@ -20,6 +51,45 @@ router.get('/me', async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v2/nebryx/resource/users/me:
+ *   put:
+ *     summary: Update current user
+ *     tags: [Resource]
+ *     description: Update current user data
+ *     security:
+ *       - SessionAuth: []
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - data
+ *             properties:
+ *               data:
+ *                 type: string
+ *                 description: JSON string containing user data
+ *                 example: '{"preferences": {"theme": "dark"}}'
+ *     responses:
+ *       200:
+ *         description: User updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized
+ *       422:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.put(
   '/me',
   [
@@ -99,6 +169,70 @@ router.delete(
   }
 );
 
+/**
+ * @swagger
+ * /api/v2/nebryx/resource/users/activity/{topic}:
+ *   get:
+ *     summary: Get user activity
+ *     tags: [Resource]
+ *     description: Get user activity logs by topic
+ *     security:
+ *       - SessionAuth: []
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: topic
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [all, session, otp, password, account]
+ *         description: Activity topic filter
+ *       - in: query
+ *         name: time_from
+ *         schema:
+ *           type: integer
+ *         description: Start timestamp (Unix)
+ *       - in: query
+ *         name: time_to
+ *         schema:
+ *           type: integer
+ *         description: End timestamp (Unix)
+ *       - in: query
+ *         name: result
+ *         schema:
+ *           type: string
+ *           enum: [succeed, failed]
+ *         description: Filter by result
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Number of records to return
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: Number of records to skip
+ *     responses:
+ *       200:
+ *         description: Activity logs
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Activity'
+ *       401:
+ *         description: Unauthorized
+ *       422:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get(
   '/activity/:topic',
   [
@@ -152,6 +286,58 @@ router.get(
   }
 );
 
+/**
+ * @swagger
+ * /api/v2/nebryx/resource/users/password:
+ *   put:
+ *     summary: Change password
+ *     tags: [Resource]
+ *     description: Change user password
+ *     security:
+ *       - SessionAuth: []
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - old_password
+ *               - new_password
+ *               - confirm_password
+ *             properties:
+ *               old_password:
+ *                 type: string
+ *                 format: password
+ *               new_password:
+ *                 type: string
+ *                 format: password
+ *               confirm_password:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       201:
+ *         description: Password changed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Password changed
+ *       400:
+ *         description: Invalid old password or passwords don't match
+ *       401:
+ *         description: Unauthorized
+ *       422:
+ *         description: Validation error or weak password
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.put(
   '/password',
   [

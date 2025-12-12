@@ -16,6 +16,9 @@ const { initializeModels } = require('./models');
 const { initializeProvider: initializeSmsProvider } = require('./services/sms/smsService');
 const { initializeProvider: initializeEmailProvider, initializeQueue: initializeEmailQueue, initializeWorker: initializeEmailWorker } = require('./services/email');
 
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
+
 const identityRoutes = require('./routes/v2/identity');
 const resourceRoutes = require('./routes/v2/resource');
 const publicRoutes = require('./routes/v2/public');
@@ -82,6 +85,17 @@ app.use('/api/v2/nebryx/identity', identityRoutes);
 app.use('/api/v2/nebryx/resource', resourceRoutes);
 app.use('/api/v2/nebryx/public', publicRoutes);
 app.use('/api/v2/nebryx/admin', adminRoutes);
+
+app.use('/api/v2/swagger', swaggerUi.serve);
+app.get('/api/v2/swagger', swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Nebryx API Documentation',
+}));
+
+app.get('/api/v2/swagger.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
 
 if (process.env.STORAGE_TYPE === 'local') {
   const path = require('path');

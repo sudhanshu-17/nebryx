@@ -1,9 +1,38 @@
+/**
+ * @swagger
+ * tags:
+ *   - name: Resource
+ *     description: User resource management endpoints (requires authentication)
+ */
+
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const Profile = require('../../../models/Profile');
 const logger = require('../../../utils/logger');
 
+/**
+ * @swagger
+ * /api/v2/nebryx/resource/profiles/me:
+ *   get:
+ *     summary: Get user profiles
+ *     tags: [Resource]
+ *     description: Get all profiles for current user
+ *     security:
+ *       - SessionAuth: []
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of user profiles
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Profile'
+ *       401:
+ *         description: Unauthorized
+ */
 router.get('/me', async (req, res, next) => {
   try {
     const profiles = await Profile.findAll({
@@ -33,6 +62,67 @@ router.get('/me', async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v2/nebryx/resource/profiles:
+ *   post:
+ *     summary: Create profile
+ *     tags: [Resource]
+ *     description: Create a new profile for current user
+ *     security:
+ *       - SessionAuth: []
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               first_name:
+ *                 type: string
+ *                 maxLength: 255
+ *               last_name:
+ *                 type: string
+ *                 maxLength: 255
+ *               dob:
+ *                 type: string
+ *                 format: date
+ *               address:
+ *                 type: string
+ *                 maxLength: 255
+ *               postcode:
+ *                 type: string
+ *                 maxLength: 255
+ *               city:
+ *                 type: string
+ *                 maxLength: 255
+ *               country:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 3
+ *               metadata:
+ *                 type: object
+ *               confirm:
+ *                 type: boolean
+ *     responses:
+ *       201:
+ *         description: Profile created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Profile'
+ *       401:
+ *         description: Unauthorized
+ *       409:
+ *         description: Profile already exists
+ *       422:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post(
   '/',
   [
